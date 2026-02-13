@@ -124,3 +124,78 @@ class TestAccountService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     # ADD YOUR TEST CASES HERE ...
+
+
+    def test_get_account_list(self):
+        """It should Get a list of Accounts"""
+        self._create_accounts(5)
+
+        resp = self.client.get("/accounts")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data), 5)
+
+    def test_get_account(self):
+        """It should Read a single Account"""
+        account = self._create_accounts(1)[0]
+
+        resp = self.client.get(f"/accounts/{account.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(data["id"], account.id)
+        self.assertEqual(data["name"], account.name)
+
+
+    def test_get_account_not_found(self):
+        """It should return 404 if Account not found"""
+        resp = self.client.get("/accounts/9999")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_account(self):
+        """It should Update an existing Account"""
+        account = self._create_accounts(1)[0]
+
+        update_data = {
+            "name": "Updated Name",
+            "email": "updated@email.com",
+            "address": "Updated Address",
+            "phone_number": "1234567890"
+        }
+
+        resp = self.client.put(
+            f"/accounts/{account.id}",
+            json=update_data
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(data["name"], "Updated Name")
+
+
+    def test_update_account_not_found(self):
+        """It should return 404 when updating missing Account"""
+        resp = self.client.put(
+            "/accounts/9999",
+            json={"name": "Test"}
+        )
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)    
+
+    def test_delete_account(self):
+        """It should Delete an existing Account"""
+        account = self._create_accounts(1)[0]
+
+        resp = self.client.delete(f"/accounts/{account.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Verify it is actually deleted
+        resp = self.client.get(f"/accounts/{account.id}")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+
+    def test_delete_account_not_found(self):
+        """It should return 404 when deleting missing Account"""
+        resp = self.client.delete("/accounts/9999")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        

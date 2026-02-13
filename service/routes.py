@@ -100,3 +100,58 @@ def check_content_type(media_type):
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {media_type}",
     )
+
+@app.route("/accounts", methods=["GET"])
+def list_accounts():
+    """List all Accounts"""
+    app.logger.info("Request to list Accounts")
+    accounts = Account.all()
+    account_list = [account.serialize() for account in accounts]
+    return jsonify(account_list), status.HTTP_200_OK
+
+@app.route("/accounts/<int:account_id>", methods=["GET"])
+def get_account(account_id):
+    """
+    Retrieve a single Account
+    """
+    app.logger.info("Request to retrieve an Account")
+
+    account = Account.find(account_id)
+    if not account:
+        abort(status.HTTP_404_NOT_FOUND,
+              f"Account with id '{account_id}' was not found.")
+
+    return jsonify(account.serialize()), status.HTTP_200_OK
+
+@app.route("/accounts/<int:account_id>", methods=["PUT"])
+def update_account(account_id):
+    """
+    Update an existing Account
+    """
+    app.logger.info("Request to update an Account")
+
+    account = Account.find(account_id)
+    if not account:
+        abort(status.HTTP_404_NOT_FOUND,
+              f"Account with id '{account_id}' was not found.")
+
+    account.deserialize(request.get_json())
+    account.update()
+
+    return jsonify(account.serialize()), status.HTTP_200_OK
+
+@app.route("/accounts/<int:account_id>", methods=["DELETE"])
+def delete_account(account_id):
+    """
+    Delete an Account
+    """
+    app.logger.info("Request to delete an Account")
+
+    account = Account.find(account_id)
+    if not account:
+        abort(status.HTTP_404_NOT_FOUND,
+              f"Account with id '{account_id}' was not found.")
+
+    account.delete()
+    return "", status.HTTP_204_NO_CONTENT
+
